@@ -10,21 +10,27 @@ Copyright (C) 2015 Timo Rantalainen, tjrantal at gmail dot com
 package com.video4coach;
 import java.io.*;
 import java.util.*;
+
 public class LogBinReader{
 	private byte[] data;
-	public ArrayList<ArrayList<Short>> accelerations;	//Y, X, Z
+	private ArrayList<ArrayList<Short>> tempAccelerations;	//Y, X, Z
+	public short[][] accelerations;	//This will be returned to matlab
 	public LogBinReader(String fileName){
+		int dataLength =0;
 		try {
 			/*Read the file into memory (make sure you've got sufficient memory available...)*/
 			DataInputStream di = new DataInputStream( new FileInputStream(fileName));
 			//System.out.println(di.available());
-			data = new byte[di.available()];	//Reserve memory for the file data
+			dataLength =di.available();
+			data = new byte[dataLength];	//Reserve memory for the file data
 			di.readFully(data);	/*Read the file into memory*/
 			di.close();	//Close the file
 		} catch (Exception err){System.err.println("Error: "+err.getMessage());}
-		accelerations = new ArrayList<ArrayList<Short>>();
+		tempAccelerations = new ArrayList<ArrayList<Short>>();
+		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
+		System.out.println("Max array length "+maxArrayLength);
 		for (int i = 0; i<3;++i){
-			accelerations.add(new ArrayList<Short>());
+			tempAccelerations.add(new ArrayList<Short>(maxArrayLength));
 		}
 		
 		/*Read packages here
@@ -42,7 +48,7 @@ public class LogBinReader{
 		while (pointer < data.length){
 			//Check that parsing is successful, should have 1E to indicate start of package
 			LogRecord logrecord = new LogRecord(data,pointer);
-			System.out.println("P "+pointer);
+			//System.out.println("P "+pointer);
 			/*Extract accelerations here*/
 			if (logrecord.type == 0x00){
 				int valuesInRecord = (int) logrecord.payload.length*8/12;
@@ -65,32 +71,49 @@ public class LogBinReader{
 						valueBits |=0xf000;	//Set the sign
 					}
 					//Assign the value to the correct dimension
-					accelerations.get(direction).add(valueBits);
+					tempAccelerations.get(direction).add(valueBits);
 					++direction;
 					if (direction>2){
 						direction = 0;
 					}
 				}
-				for (int j = 0;j<accelerations.size();++j){
-						System.out.print(accelerations.get(j).size()+"\t");
+				/*
+				for (int j = 0;j<tempAccelerations.size();++j){
+						System.out.print(tempAccelerations.get(j).size()+"\t");
 				}
 				System.out.println("\t");
 				System.out.println("ind\ty\tx\tz\t");
-				for (int i = 0;i<accelerations.get(0).size();++i){
+				for (int i = 0;i<tempAccelerations.get(0).size();++i){
 					System.out.print(i+"\t");
-					for (int j = 0;j<accelerations.size();++j){
-						System.out.print(accelerations.get(j).get(i)+"\t");
+					for (int j = 0;j<tempAccelerations.size();++j){
+						System.out.print(tempAccelerations.get(j).get(i)+"\t");
 					}
 					System.out.println("");
 				}
 				//System.out.println("Found activity data, pointer "+pointer+" values "+valuesInRecord);
-				
 				break;
+				*/
 			}
 			pointer = logrecord.nextRecordPointer;
+			System.out.print("Processed \t"+((int) (((double)pointer)/((double)dataLength)*100d))+"\r");
+		}
+		//Get the results into a primitive short array
+		int arrayLength = min(new int[]{tempAccelerations.get(0).size(),tempAccelerations.get(1).size(),tempAccelerations.get(2).size()});
+		for (int j = 0;j<tempAccelerations.size();++j){
+			accelerations[j] = new short[arrayLength];
+			for (int i = 0;i<arrayLength;++i){
+				accelerations[j][i] = tempAccelerations.get(j).get(i);
+			}
 		}
 	}
 	
+	private int min(int[] a){
+		return min(min(a[0],a[1]),a[2]);
+	}
+	
+	private int min(int a,int b){
+		return a < b ? a:b;
+	}
 	/*Helper class to contain log record*/
 	public class LogRecord{
 		public int separator;
