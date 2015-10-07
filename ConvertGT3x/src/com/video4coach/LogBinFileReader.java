@@ -18,10 +18,12 @@ public class LogBinFileReader{
 	private byte[] sensorValue;
 	public byte[] headerData;	//To be used by the subclass LogRecordHeader
 	public byte[] shortBytes;
+	public byte[] tStampBytes;
 	public LogBinFileReader(String[] args){
 		sensorValue = new byte[3];
 		headerData = new byte[8];
 		shortBytes = new byte[2];
+		tStampBytes = new byte[4];
 		try {
 			/*Read the file into memory (make sure you've got sufficient memory available...)*/
 			FileInputStream fi = new FileInputStream(args[0]);
@@ -90,6 +92,13 @@ public class LogBinFileReader{
 
 						if (direction>2){
 							direction = 0;
+							//Write time stamp
+							
+							tStampBytes[0] = (byte) (logrecord.timeStamp &	0x000000FF);	//LSB first (java is MSB)
+							tStampBytes[1] = (byte) ((logrecord.timeStamp &	0x0000FF00)>>8);	//MSB second
+							tStampBytes[2] = (byte) ((logrecord.timeStamp &	0x00FF0000)>>16);	//LSB first (java is MSB)
+							tStampBytes[3] = (byte) ((logrecord.timeStamp &	0xFF000000)>>24);	//LSB first (java is MSB)
+							bo.write(tStampBytes);
 							//bf.write(valueBits+"\n");
 						}else{
 							//bf.write(valueBits+"\t");
