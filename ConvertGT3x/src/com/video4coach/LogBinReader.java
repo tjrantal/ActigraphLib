@@ -45,11 +45,15 @@ public class LogBinReader{
 			
 		*/
 		int pointer = 0;	//used to know where we are in the file data
-		while (pointer < data.length){
+		LogRecord logrecord;
+		int pointerIncrementTargetForGC = dataLength/25;
+		int pointerIncrement = 0;
+		while (pointer < dataLength){
 			//Check that parsing is successful, should have 1E to indicate start of package
-			LogRecord logrecord = new LogRecord(data,pointer);
+			logrecord = new LogRecord(data,pointer);
 			//System.out.println("P "+pointer);
 			/*Extract accelerations here*/
+			/*JATKA TASTA, Modify implementation to use data instead of logrecord copy??*/
 			if (logrecord.type == 0x00){
 				int valuesInRecord = (int) logrecord.payload.length*8/12;
 				int valuesExtracted = 0;
@@ -94,8 +98,15 @@ public class LogBinReader{
 				break;
 				*/
 			}
+			pointerIncrement += logrecord.nextRecordPointer-pointer;
 			pointer = logrecord.nextRecordPointer;
 			System.out.print("Processed \t"+((int) (((double)pointer)/((double)dataLength)*100d))+"\r");
+			if (pointerIncrement > pointerIncrementTargetForGC){
+				System.out.println("garbage collect");
+				System.gc();
+				System.out.println("garbage collect done");
+				pointerIncrement = 0;
+			}
 		}
 		//Get the results into a primitive short array
 		int arrayLength = min(new int[]{tempAccelerations.get(0).size(),tempAccelerations.get(1).size(),tempAccelerations.get(2).size()});
@@ -104,6 +115,7 @@ public class LogBinReader{
 			for (int i = 0;i<arrayLength;++i){
 				accelerations[j][i] = tempAccelerations.get(j).get(i);
 			}
+			tempAccelerations.get(j).clear();
 		}
 	}
 	

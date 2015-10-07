@@ -1,0 +1,2 @@
+javac com\video4coach\LogBinFileReader.java
+java -Xmx4g com.video4coach.LogBinFileReader c:\timo\research\BelavyQuittner2015\data\actigraph\S001\log.bin c:\timo\research\BelavyQuittner2015\analysis\test.bin
