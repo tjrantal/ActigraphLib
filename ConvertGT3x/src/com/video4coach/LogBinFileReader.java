@@ -54,8 +54,8 @@ public class LogBinFileReader{
 				8+4 1 byte	= Checksum
 				
 			*/
-			int pointer = 0;	//used to know where we are in the file data
 			LogBinFileReader.LogRecordHeader logrecord;
+			int pointerIncrementTargetForGC = dataLength/25;
 			int pointerIncrement = 0;
 			//bf.write("y\tx\tz\n");
 			while (fi.available() > 0){
@@ -127,8 +127,14 @@ public class LogBinFileReader{
 				}
 				//discard checksum
 				fi.skip(1);	//Read one byte (checksum)
-				System.out.print("Processed \t"+((int) ((1d-((double)fi.available())/((double)dataLength))*100d))+"\r");
+				pointerIncrement += logrecord.size+9;
+				if (pointerIncrement > pointerIncrementTargetForGC){
+					pointerIncrement = 0;
+					System.out.print("Processed \t"+((int) ((1d-((double)fi.available())/((double)dataLength))*100d))+"\r");
+				}
+
 			}
+			System.out.println("");
 			bo.close();	//Done writing...
 			//bf.close();	//Done writing...
 			fi.close();	//Close the file
