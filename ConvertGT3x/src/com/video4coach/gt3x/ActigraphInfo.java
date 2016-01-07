@@ -34,10 +34,12 @@ public class ActigraphInfo {
 	int SampleRate;
 	long StartDate;
 	long StopDate;
+	long LastSampleTime;
 	String TimeZone;
 	long DownloadDate;
 	int BoardRevision;
 	int UnexpectedResets;
+	double AccelerationScale;
 	String Sex;
 	int Height;
 	int Mass;
@@ -49,6 +51,12 @@ public class ActigraphInfo {
 	long DateOfBirth;
 	String SubjectName;
 	
+	public void setAccelerationScale(double aScale){
+		AccelerationScale = aScale;
+	}
+	public double getAccelerationScale(){
+		return AccelerationScale;
+	}
 	public String getSerialNumber() {
 		return SerialNumber;
 	}
@@ -91,6 +99,16 @@ public class ActigraphInfo {
 	public void setStopDate(long stopDate) {
 		StopDate = stopDate;
 	}
+	
+	public long LastSampleTime() {
+		return LastSampleTime;
+	}
+	
+	public void setLastSampleTime(long lastSampleTime){
+		this.LastSampleTime = lastSampleTime;
+	}
+	
+	
 	public String getTimeZone() {
 		return TimeZone;
 	}

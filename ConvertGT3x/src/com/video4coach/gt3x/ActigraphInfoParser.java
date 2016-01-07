@@ -123,12 +123,61 @@ public class ActigraphInfoParser {
 					
 				}
 				
+				/*TimeZone*/
+				if (line.indexOf("TimeZone") == 0) {					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setTimeZone(val);
+					}
+				}
+				
+				/*Unexpected Resets*/
+				if (line.indexOf("Unexpected Resets") == 0) {					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setUnexpectedResets(Integer.parseInt(val));
+					}
+				}
+				
+				/*Last Sample Time*/
+				if (line.indexOf("Last Sample Time") == 0) {					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setLastSampleTime(Long.parseLong(val));
+					}
+				}
+				
+				/*Stop Date*/
+				if (line.indexOf("Stop Date") == 0) {					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setStopDate(Long.parseLong(val));
+					}
+				}
+				
+				/*Download Date*/
 				if (line.indexOf("Download Date") == 0) {					
-					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setDownloadDate(Long.parseLong(val));
+					}
 				}
+				
+				/*Start Date*/
 				if (line.indexOf("Start Date") == 0) {					
-					
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setStartDate(Long.parseLong(val));
+					}
 				}
+				
+				/*Sample Rate*/
 				if (line.indexOf("Sample Rate") == 0) {
 					// ok found
 					if (matcher.find()) {
@@ -139,6 +188,26 @@ public class ActigraphInfoParser {
 					
 				}
 				
+				/*Subject Name*/
+				if (line.indexOf("Subject Name") == 0) {
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						header.setSubjectName(val);
+					}
+					
+				}
+				
+				/*AccelerationScale*/
+				if (line.indexOf("Acceleration Scale") >= 0) {
+					// ok found
+					if (matcher.find()) {
+						String val = matcher.group();
+						
+						header.setAccelerationScale(Double.parseDouble(val));
+					}
+					
+				}
 			}
 		} finally {
 			// ensure the underlying stream is always closed
