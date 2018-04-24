@@ -8,9 +8,6 @@
   <!-- set global properties for this build -->
   <property environment="env"/>
   <property name="projectName" location="gt3x" />
-  <property name="JAVA_HOME" location="${env.JAVA_HOME}" />
-  <property name="copyJarTo" location="../" />
-  
 	
 	<!-- Source paths and build path -->
   <property name="javasrc" location="ConvertGT3x/src" />
@@ -21,21 +18,16 @@
   <!-- Initialize -->
   <target name="init">
     <tstamp/>
-    <!-- Echo values passed in so there's no confusion -->
-    <echo message="JAVA_HOME is ${JAVA_HOME}"/>
     <mkdir dir="${build}" />
     <mkdir dir="${classes}" />
   </target>
 
   <target name="javacompile" depends="init" description="Compile Java source" >
-	<javac source="1.5" target="1.5" srcdir="${javasrc}" destdir="${classes}" nowarn="on">
-    <!--<javac source="1.5" srcdir="${javasrc}" destdir="${classes}" nowarn="on">-->
+	<javac source="1.6" target="1.6" srcdir="${javasrc}" destdir="${classes}" nowarn="on">
 		<compilerarg line="-Xmaxerrs 10"/>
 		<classpath> 
 			<!--classpath-->
 			<pathelement path="${classes}"/> 
-			<!--jars-->
-			<pathelement location="${imagej}"/> 
 		</classpath>
     </javac>
   </target>
@@ -46,10 +38,8 @@
 		<fileset dir="${javasrc}" includes="**/*.java"/>
 	</copy>
 	
-    <mkdir dir="${dist}"/>
+   <mkdir dir="${dist}"/>
 	<jar jarfile="${projectName}.jar" basedir="${classes}"/>
-	<!--Copy the created jar-file to your ij plugins...-->
-	<copy todir="${copyJarTo}" file="${projectName}.jar"/>	
   </target>
   
   <target name="clean" description="Remove output files" >

@@ -46,16 +46,28 @@ public class ActigraphInfoParser {
 		return hasExtention;
 	}
 	
+	
+	/** Call extractInfo with fileName */
+	public final ActigraphInfo extractInfo(String aFileName) throws FileNotFoundException, ParseException {
+		return extractInfo(new Scanner(new File(aFileName)));
+	}
+
+	/** Call extractInfo with info file text string */
+	public final ActigraphInfo extractInfo(String textFileString,boolean isTextFileString) throws FileNotFoundException, ParseException {
+		return extractInfo(new Scanner(textFileString));
+	}
+	
+	
 	/** Template method that calls {@link #processLine(String)}. 
 	 * @throws ParseException */
-	public final ActigraphInfo extractInfo(String aFileName) throws FileNotFoundException, ParseException {
-
+	public final ActigraphInfo extractInfo(Scanner scanner) throws FileNotFoundException, ParseException {
+		/*
 		File fFile = new File(aFileName); 
 	    
 	    String delimiter = "[\\"+ File.separator + " .]";
 	    String [] tokens = aFileName.split(delimiter);
 		Scanner scanner = new Scanner(fFile);
-				
+			*/	
 		
 		try {
 			// first use a Scanner to get each line
@@ -67,7 +79,7 @@ public class ActigraphInfoParser {
 
 				String lineDelimiter = ":";				
 				
-				tokens = line.split(lineDelimiter);
+				String[] tokens = line.split(lineDelimiter);
 
 				/*
 				Serial Number: NEO1F07120490
