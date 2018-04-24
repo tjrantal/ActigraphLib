@@ -2,6 +2,7 @@ package com.video4coach;
 
 import java.io.*;
 import java.util.zip.*;
+import java.util.*;	//ArrayList
 import com.video4coach.gt3x.*;	//Info file parsing
 
 /*
@@ -15,6 +16,8 @@ import com.video4coach.gt3x.*;	//Info file parsing
 
 public class ReadGT3x {
 	public ActigraphInfo header;
+	public ArrayList<Double> resultant;
+	public ArrayList<Double> tStamps;
 
 	public ReadGT3x(String fileIn){
 		
@@ -22,6 +25,7 @@ public class ReadGT3x {
 		//Debugging, log acc rate, and scaling factors
 		log(String.format("Acc rate %d",header.getSampleRate()));
 		log(String.format("AccScale %.3f",header.getAccelerationScale()));
+		resultant = getResultant(fileIn);
 	}
 
 	private static void log(String text) {
@@ -57,10 +61,11 @@ public class ReadGT3x {
 				if (! (entry.getName().equals("info.txt") == true) ){
 					continue;	//Skip the rest of the loop -> getNextEntry();
 				}
-
+				log(String.format("Info.txt size %d bytes",(int) entry.getSize()));
 				byte[] buffer = new byte[bufferSize];
 				while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
 					bos.write(buffer, 0, size);
+					log(String.format("Read %d bytes",size));
 				}
 			}
 			bos.flush();
@@ -84,35 +89,46 @@ public class ReadGT3x {
 		return header;
 	}
 
-	private static boolean unzipActivityFile(String[] args) {
-
+	private ArrayList<Double> getResultant(String fileIn) {
+		ArrayList<Double> resultant = null;
 		try {
 
 			// Take the filename from the input arguments
-			FileInputStream fis = new FileInputStream(args[0]);
+			FileInputStream fis = new FileInputStream(fileIn);
 
 			//
-			// Creating input stream that also maintains the checksum of the
-			// data which later can be used to validate data integrity.
-			//
-			CheckedInputStream checksum = new CheckedInputStream(fis,
-					new Adler32());
-			ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
-					checksum));
+			// Creating input stream that also maintains the checksum of the data 
+			CheckedInputStream checksum = new CheckedInputStream(fis,new Adler32());
+			ZipInputStream zis = new ZipInputStream(new BufferedInputStream(checksum));
 			ZipEntry entry;
-
+			int bufferSize  = 4095;
+			int size;
 			//
-			// Read each entry from the ZipInputStream until no more entry found
-			// indicated by a null return value of the getNextEntry() method.
-			//
+			// Read each entry from the ZipInputStream until activity.bin or log.bin is found
 			while ((entry = zis.getNextEntry()) != null) {
 				System.out.println("Unzipping: " + entry.getName());
 
 				if (! (entry.getName().equalsIgnoreCase("activity.bin") == true ||
-						entry.getName().equalsIgnoreCase("log.bin") == true ||
-						entry.getName().equals("info.txt") == true) )
-					continue;
-
+						entry.getName().equalsIgnoreCase("log.bin") == true) ){
+					continue;	//Ignore the rest of the loop -> zis-getNextEntry()
+				}
+				byte[] buffer = new byte[bufferSize];
+				long bytesOfData = entry.getSize();
+				long bytesRead = 0l;
+				
+				//LogBinFileReader implementation for reading the data.
+				//Get scaling from info.txt
+				
+				while (bytesRead < bytesOfData){
+					size = zis.read(buffer, 0, buffer.length);
+					bytesRead += (long) size;
+					//log(String.format("Read returned %d bytes",size));
+					
+					//Decode buffer, calculate resultant, and add to resultant
+					
+				}
+				/*
+				//binary data file found if got this far
 				int size;
 				byte[] buffer = new byte[2048];
 
@@ -125,6 +141,7 @@ public class ReadGT3x {
 				}
 				bos.flush();
 				bos.close();
+				*/
 			}
 
 			zis.close();
@@ -139,7 +156,7 @@ public class ReadGT3x {
 			e.printStackTrace();
 		}
 
-		return true;
+		return resultant;
 	}
 
 }
