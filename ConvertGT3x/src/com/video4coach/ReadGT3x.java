@@ -11,6 +11,8 @@ import com.video4coach.gt3x.*;	//Info file parsing
 	Read in two steps
 	1) get sample rate and scaling from info.txt 
 	2) read data from data.bin subsequently
+	
+		This class is meant for data processing so handles data one day at a time starting from the first mignight in the file, and ending in the last. Discards the first and the last bits of data in the file
 
 */
 
@@ -22,10 +24,17 @@ public class ReadGT3x {
 	public ReadGT3x(String fileIn){
 		
 		header = getHeader(fileIn);
+		if (header == null){
+			return;
+		}
 		//Debugging, log acc rate, and scaling factors
 		log(String.format("Acc rate %d",header.getSampleRate()));
 		log(String.format("AccScale %.3f",header.getAccelerationScale()));
-		resultant = getResultant(fileIn);
+		byte[] data = unzipData(fileIn);
+		if (data == null){
+			return;
+		}
+		log(String.format("Got data %d",data.length));
 	}
 
 	private static void log(String text) {
@@ -60,14 +69,20 @@ public class ReadGT3x {
 
 				if (! (entry.getName().equals("info.txt") == true) ){
 					continue;	//Skip the rest of the loop -> getNextEntry();
+				}else{
+					break;	//Found the entry of interest
 				}
-				log(String.format("Info.txt size %d bytes",(int) entry.getSize()));
-				byte[] buffer = new byte[bufferSize];
-				while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
-					bos.write(buffer, 0, size);
-					log(String.format("Read %d bytes",size));
-				}
+				
 			}
+			
+			//Read the file	
+			log(String.format("Info.txt size %d bytes",(int) entry.getSize()));
+			byte[] buffer = new byte[bufferSize];
+			while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
+				bos.write(buffer, 0, size);
+				log(String.format("Read %d bytes",size));
+			}
+		
 			bos.flush();
 			String infoTxtString = new String(fos.toByteArray());
 			log(infoTxtString);
@@ -89,74 +104,63 @@ public class ReadGT3x {
 		return header;
 	}
 
-	private ArrayList<Double> getResultant(String fileIn) {
-		ArrayList<Double> resultant = null;
+	private byte[] unzipData(String fileIn) {
+		byte[] data = null;
+		log("Unzip data "+fileIn);
+		
 		try {
 
 			// Take the filename from the input arguments
 			FileInputStream fis = new FileInputStream(fileIn);
 
-			//
 			// Creating input stream that also maintains the checksum of the data 
 			CheckedInputStream checksum = new CheckedInputStream(fis,new Adler32());
 			ZipInputStream zis = new ZipInputStream(new BufferedInputStream(checksum));
 			ZipEntry entry;
-			int bufferSize  = 4095;
-			int size;
-			//
-			// Read each entry from the ZipInputStream until activity.bin or log.bin is found
+			
+			//Unzip the file into memory as bytes, handle bytes as the next step
+			int bufferSize = (int) Math.pow(2d,11d);
+			ByteArrayOutputStream fos = new ByteArrayOutputStream();
+			BufferedOutputStream bos = new BufferedOutputStream(fos,bufferSize);
+			
+			// Read each entry from the ZipInputStream until find info.txt
 			while ((entry = zis.getNextEntry()) != null) {
-				System.out.println("Unzipping: " + entry.getName());
+				//log("Unzipping: " + entry.getName());
 
-				if (! (entry.getName().equalsIgnoreCase("activity.bin") == true ||
+				if (!(entry.getName().equalsIgnoreCase("activity.bin") == true ||
 						entry.getName().equalsIgnoreCase("log.bin") == true) ){
-					continue;	//Ignore the rest of the loop -> zis-getNextEntry()
-				}
-				byte[] buffer = new byte[bufferSize];
-				long bytesOfData = entry.getSize();
-				long bytesRead = 0l;
-				
-				//LogBinFileReader implementation for reading the data.
-				//Get scaling from info.txt
-				
-				while (bytesRead < bytesOfData){
-					size = zis.read(buffer, 0, buffer.length);
-					bytesRead += (long) size;
-					//log(String.format("Read returned %d bytes",size));
-					
-					//Decode buffer, calculate resultant, and add to resultant
-					
-				}
-				/*
-				//binary data file found if got this far
-				int size;
-				byte[] buffer = new byte[2048];
 
-				FileOutputStream fos = new FileOutputStream(args[1]+entry.getName());
-				BufferedOutputStream bos = new BufferedOutputStream(fos,
-						buffer.length);
-
-				while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
-					bos.write(buffer, 0, size);
+					continue;	//Skip the rest of the loop -> getNextEntry();
+				}else{
+					break;	//Found the entry of interest
 				}
-				bos.flush();
-				bos.close();
-				*/
+				
 			}
-
+			
+			//Log.bin found
+			log(String.format("Binary file size %d bytes",(int) entry.getSize()));
+			
+			int size;
+			byte[] buffer = new byte[bufferSize];
+			while ((size = zis.read(buffer, 0, buffer.length)) != -1) {
+				bos.write(buffer, 0, size);
+				//log(String.format("Read %d bytes",size));
+			}
+			
+			bos.flush();
+			data = fos.toByteArray();
+			log(String.format("Data in memory %d",data.length));
+						
+			//Close streams			
+			bos.close();
 			zis.close();
 			fis.close();
-
-			//
-			// Print out the checksum value
-			//
-			System.out.println("Checksum = "
-					+ checksum.getChecksum().getValue());
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		return resultant;
+		return data;
 	}
 
 }
