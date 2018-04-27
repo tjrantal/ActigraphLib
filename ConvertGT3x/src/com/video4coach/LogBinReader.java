@@ -13,7 +13,7 @@ import java.util.*;
 
 public class LogBinReader{
 	private byte[] data;
-	private ArrayList<ArrayList<Short>> tempAccelerations;	//Y, X, Z
+	
 	public short[][] accelerations;	//This will be returned to matlab
 	public LogBinReader(String fileName){
 		int dataLength =0;
@@ -26,9 +26,20 @@ public class LogBinReader{
 			di.readFully(data);	/*Read the file into memory*/
 			di.close();	//Close the file
 		} catch (Exception err){System.err.println("Error: "+err.getMessage());}
-		tempAccelerations = new ArrayList<ArrayList<Short>>();
+		accelerations = decodeData(data);
+	}
+	
+	public LogBinReader(byte[] data){
+		accelerations = decodeData(data);
+		System.out.println("Decoded data "+accelerations[0].length);
+	}
+	
+	
+	public short[][] decodeData(byte[] data){
+		int dataLength = data.length;
 		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
 		System.out.println("Max array length "+maxArrayLength);
+		ArrayList<ArrayList<Short>> tempAccelerations  = new ArrayList<ArrayList<Short>>();	//Y, X, Z
 		for (int i = 0; i<3;++i){
 			tempAccelerations.add(new ArrayList<Short>(maxArrayLength));
 		}
@@ -101,22 +112,26 @@ public class LogBinReader{
 			pointerIncrement += logrecord.nextRecordPointer-pointer;
 			pointer = logrecord.nextRecordPointer;
 			System.out.print("Processed \t"+((int) (((double)pointer)/((double)dataLength)*100d))+"\r");
+			/*
 			if (pointerIncrement > pointerIncrementTargetForGC){
 				System.out.println("garbage collect");
 				System.gc();
 				System.out.println("garbage collect done");
 				pointerIncrement = 0;
 			}
+			*/
 		}
 		//Get the results into a primitive short array
 		int arrayLength = min(new int[]{tempAccelerations.get(0).size(),tempAccelerations.get(1).size(),tempAccelerations.get(2).size()});
+		short[][] returnVal = new short[3][];
 		for (int j = 0;j<tempAccelerations.size();++j){
-			accelerations[j] = new short[arrayLength];
+			returnVal[j] = new short[arrayLength];
 			for (int i = 0;i<arrayLength;++i){
-				accelerations[j][i] = tempAccelerations.get(j).get(i);
+				returnVal[j][i] = tempAccelerations.get(j).get(i);
 			}
 			tempAccelerations.get(j).clear();
 		}
+		return returnVal;
 	}
 	
 	private int min(int[] a){

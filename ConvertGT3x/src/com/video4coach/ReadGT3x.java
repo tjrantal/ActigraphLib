@@ -35,6 +35,8 @@ public class ReadGT3x {
 			return;
 		}
 		log(String.format("Got data %d",data.length));
+		LogBinReader lbr = new LogBinReader(data);
+		log("Got lbr");
 	}
 
 	private static void log(String text) {
@@ -161,6 +163,11 @@ public class ReadGT3x {
 		}
 
 		return data;
+	}
+
+	public void decodeData(byte[] data){
+		
+		
 	}
 
 }
