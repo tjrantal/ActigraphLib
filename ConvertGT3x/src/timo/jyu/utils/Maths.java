@@ -6,16 +6,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 
-
-
 public class Maths{
 	
 	public static double calcMad(ArrayList<Double> a){
-		double[] b = new double[a.size()];
-		for (int i = 0; i<a.size();++i){
-			b[i] = a.get(i);
-		}		
-		return MAD(b,true);
+		if (a.size() > 0){
+			double[] b = new double[a.size()];
+			for (int i = 0; i<a.size();++i){
+				b[i] = a.get(i);
+			}		
+			return MAD(b,true);
+		}else{
+			return Double.NaN;
+		}
 	}
 	//Calculate mean
 	public static double mean(double[] a){

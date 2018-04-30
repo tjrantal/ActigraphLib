@@ -47,17 +47,20 @@ public class ErmaReader{
 	public ErmaReader(byte[] data,ActigraphInfo header,Locale locale){
 		this.locale = locale;
 		accelerations = decodeData(data,header.getAccelerationScale());
-		System.out.println("Decoded data "+accelerations[0].length);
+		//System.out.println("Decoded data "+accelerations[0].length);
 	}
 	
 	
 	public short[][] decodeData(byte[] data,double aScale){
 		int dataLength = data.length;
 		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
-		System.out.println("Max array length "+maxArrayLength);
+		//System.out.println("Max array length "+maxArrayLength);
 		ArrayList<ArrayList<Short>> tempAccelerations  = new ArrayList<ArrayList<Short>>();	//Y, X, Z
 		
 		ArrayList<Value> resultant = new ArrayList<Value>();	//Used to hold resultant
+	   mads = new ArrayList<Value>();
+		peaks = new ArrayList<Value>();
+		
 		
 		for (int i = 0; i<3;++i){
 			tempAccelerations.add(new ArrayList<Short>(maxArrayLength));
@@ -97,8 +100,10 @@ public class ErmaReader{
 				
 				//Have a full day of data in memory, calculate one second MADs, and 
 				if (logrecord.timeStamp >= nextMidnight){
+					//System.out.println("\nFound full day of data resultant size "+resultant.size());
 					//Calculate MADs
 					mads.addAll(Utils.getMads(resultant));
+					//System.out.println("Mads size "+mads.size());
 					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
 					//peaks.add(Utils.getPeaks(resultant));
 					

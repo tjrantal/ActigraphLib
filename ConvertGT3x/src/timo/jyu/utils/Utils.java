@@ -41,16 +41,24 @@ public class Utils{
 		int cnt = 0;
 		while (cnt < resultant.size()){
 			//Add data to temp
-			if (resultant.get(cnt).tStamp <= tStamp){
-				temp.add(resultant.get(cnt).value);
-			}else{
+			if (resultant.get(cnt).tStamp > tStamp){
 				//calc mad here, add to mads, increment tStamp, and clear temp
+				//System.out.println("Next second temp size "+temp.size());
 				mads.add(new Value(tStamp,Maths.calcMad(temp)));
 				++tStamp;
 				temp.clear();
+
 			}
+			temp.add(resultant.get(cnt).value);
 			++cnt;
 		}
+		
+		//System.out.println("Got through resultant");
+		//add the final second of data
+		if (temp.size() > 1){
+			mads.add(new Value(tStamp,Maths.calcMad(temp)));
+		}
+		//System.out.println("Return mads");
 		return mads;
 	}
 

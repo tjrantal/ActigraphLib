@@ -5,6 +5,12 @@ import java.util.zip.*;
 import java.util.*;	//ArrayList
 import com.video4coach.gt3x.*;	//Info file parsing
 
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.util.Locale;
+
 /*
 	A class for reading accelerations from a .gt3x file without creating temporary files in 	between
 	.gt3x file is a zip file, and accelerations are bit-packed in the unzipped file. 
@@ -37,6 +43,24 @@ public class ReadGT3x {
 		log(String.format("Got data %d",data.length));
 		ErmaReader lbr = new ErmaReader(data,header, new Locale("fi","FI"));
 		log("Got lbr");
+		//Spit mads out to a file
+		writeMads(lbr);
+		
+		
+	}
+
+	private void writeMads(ErmaReader er){
+		try{		
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testOutput.csv")));
+			br.write(String.format(Locale.ROOT,"%s,%s\n","TimeStamp","MAD"));
+			for (int i = 0;i<er.mads.size();++i){
+				br.write(String.format(Locale.ROOT,"%d,%f\n",1000l*((long) er.mads.get(i).tStamp),er.mads.get(i).value));
+			}
+			br.flush();
+			br.close();
+		}catch  (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	private static void log(String text) {
