@@ -35,7 +35,7 @@ public class ReadGT3x {
 			return;
 		}
 		log(String.format("Got data %d",data.length));
-		LogBinReader lbr = new LogBinReader(data);
+		LogBinReader lbr = new ErmaReader(data);
 		log("Got lbr");
 	}
 

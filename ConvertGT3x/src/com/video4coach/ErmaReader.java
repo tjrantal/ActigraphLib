@@ -11,11 +11,11 @@ package com.video4coach;
 import java.io.*;
 import java.util.*;
 
-public class LogBinReader{
+public class ErmaReader{
 	private byte[] data;
 	
 	public short[][] accelerations;	//This will be returned to matlab
-	public LogBinReader(String fileName){
+	public ErmaReader(String fileName){
 		int dataLength =0;
 		try {
 			/*Read the file into memory (make sure you've got sufficient memory available...)*/
@@ -29,7 +29,7 @@ public class LogBinReader{
 		accelerations = decodeData(data);
 	}
 	
-	public LogBinReader(byte[] data){
+	public ErmaReader(byte[] data){
 		accelerations = decodeData(data);
 		System.out.println("Decoded data "+accelerations[0].length);
 	}
@@ -163,6 +163,6 @@ public class LogBinReader{
 	}
 	
 	public static void main(String[] a){
-		LogBinReader lbr = new LogBinReader(a[0]);
+		ErmaReader lbr = new ErmaReader(a[0]);
 	}
 }
