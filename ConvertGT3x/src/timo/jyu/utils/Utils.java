@@ -6,6 +6,7 @@ import java.util.Date;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.text.ParsePosition;
+import java.util.ArrayList;
 
 /*Utility class to work with dates, and to calculate MADs and detect peaks*/
 
@@ -32,4 +33,25 @@ public class Utils{
 		return calendar.getTimeInMillis();  //Java ms timestamp
 		
 	}
+	
+	public static ArrayList<Value> getMads(ArrayList<Value> resultant){
+		ArrayList<Value> mads = new ArrayList<Value>();
+		ArrayList<Double> temp = new ArrayList<Double>();
+		long tStamp = resultant.get(0).tStamp;
+		int cnt = 0;
+		while (cnt < resultant.size()){
+			//Add data to temp
+			if (resultant.get(cnt).tStamp <= tStamp){
+				temp.add(resultant.get(cnt).value);
+			}else{
+				//calc mad here, add to mads, increment tStamp, and clear temp
+				mads.add(new Value(tStamp,Maths.calcMad(temp)));
+				++tStamp;
+				temp.clear();
+			}
+			++cnt;
+		}
+		return mads;
+	}
+
 }

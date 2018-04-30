@@ -13,7 +13,10 @@ package com.video4coach;
 import java.io.*;
 import java.util.*;
 
+import com.video4coach.gt3x.ActigraphInfo;	//Info file parsing
+
 import timo.jyu.utils.Utils;	//ERMA-specific utility functions
+import timo.jyu.utils.Value;	//Helper class to store mad and peak values
 
 public class ErmaReader{
 	private byte[] data;
@@ -23,18 +26,10 @@ public class ErmaReader{
 	public ArrayList<Value> peaks; //Holds peaks and corresponding timestamps (uses the start of the peak as the instant)
 	private Locale locale;
 	
-	/**Helper class to hold mad and peak values**/
-	public class Value{
-		public long tStamp;
-		public double value;
-		public Value(long tStamp, double value){
-			this.tStamp = tStamp;
-			this.value= value;
-		}
-	}
+
 	
 	
-	public ErmaReader(String fileName,Locale locale){
+	public ErmaReader(String fileName,ActigraphInfo header,Locale locale){
 		int dataLength =0;
 		this.locale = locale;
 		try {
@@ -46,21 +41,24 @@ public class ErmaReader{
 			di.readFully(data);	/*Read the file into memory*/
 			di.close();	//Close the file
 		} catch (Exception err){System.err.println("Error: "+err.getMessage());}
-		accelerations = decodeData(data);
+		accelerations = decodeData(data,header.getAccelerationScale());
 	}
 	
-	public ErmaReader(byte[] data,Locale locale){
+	public ErmaReader(byte[] data,ActigraphInfo header,Locale locale){
 		this.locale = locale;
-		accelerations = decodeData(data);
+		accelerations = decodeData(data,header.getAccelerationScale());
 		System.out.println("Decoded data "+accelerations[0].length);
 	}
 	
 	
-	public short[][] decodeData(byte[] data){
+	public short[][] decodeData(byte[] data,double aScale){
 		int dataLength = data.length;
 		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
 		System.out.println("Max array length "+maxArrayLength);
 		ArrayList<ArrayList<Short>> tempAccelerations  = new ArrayList<ArrayList<Short>>();	//Y, X, Z
+		
+		ArrayList<Value> resultant = new ArrayList<Value>();	//Used to hold resultant
+		
 		for (int i = 0; i<3;++i){
 			tempAccelerations.add(new ArrayList<Short>(maxArrayLength));
 		}
@@ -99,7 +97,20 @@ public class ErmaReader{
 				
 				//Have a full day of data in memory, calculate one second MADs, and 
 				if (logrecord.timeStamp >= nextMidnight){
+					//Calculate MADs
+					mads.addAll(Utils.getMads(resultant));
+					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
+					//peaks.add(Utils.getPeaks(resultant));
 					
+					//Reset raw data
+					resultant.clear();
+					for (int d = 0;d<tempAccelerations.size(); ++d){
+						tempAccelerations.get(d).clear();
+					}
+					
+					//Update midnight time stamps
+					prevMidnight = nextMidnight;
+					nextMidnight = (int) (Utils.getNextMidnight(1000l*((long) nextMidnight),locale)/1000l);
 				}
 				
 				
@@ -130,7 +141,16 @@ public class ErmaReader{
 						++direction;
 						if (direction>2){
 							direction = 0;
+							//Add resultant, and corresponding time stamp
+							resultant.add(new Value(logrecord.timeStamp,
+								Math.sqrt(
+	Math.pow(((double) tempAccelerations.get(0).get(tempAccelerations.get(direction).size()-1))/aScale,2d)+
+	Math.pow(((double) tempAccelerations.get(1).get(tempAccelerations.get(direction).size()-1))/aScale,2d)+
+	Math.pow(((double) tempAccelerations.get(2).get(tempAccelerations.get(direction).size()-1))/aScale,2d))
+							));
 						}
+						
+
 					}
 				}
 				/*
