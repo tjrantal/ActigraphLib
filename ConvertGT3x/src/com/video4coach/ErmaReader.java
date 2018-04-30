@@ -1,22 +1,42 @@
 /*
 The software is licensed under a Creative Commons Attribution 3.0 Unported License.
-Copyright (C) 2015 Timo Rantalainen, tjrantal at gmail dot com
+Copyright (C) 2015 - 2018 Timo Rantalainen, tjrantal at gmail dot com
 */
 
 /*
 	Actigraph GT3X+ file reader (https://github.com/actigraph/GT3X-File-Format) for the log.bin data
+	Specifically written for Eija Laakkonen's & Vuokko Kovanen's ERMA project actigraph data.
+	Calculates Vähä-Ypyä's mean amplitude deviation values per second, and extract each accelerometry peak above 1.3 g
 */
 
 package com.video4coach;
 import java.io.*;
 import java.util.*;
 
+import timo.jyu.utils.Utils;	//ERMA-specific utility functions
+
 public class ErmaReader{
 	private byte[] data;
 	
 	public short[][] accelerations;	//This will be returned to matlab
-	public ErmaReader(String fileName){
+	public ArrayList<Value> mads;	//Holds one second Mad values, and corresponding timestamps
+	public ArrayList<Value> peaks; //Holds peaks and corresponding timestamps (uses the start of the peak as the instant)
+	private Locale locale;
+	
+	/**Helper class to hold mad and peak values**/
+	public class Value{
+		public long tStamp;
+		public double value;
+		public Value(long tStamp, double value){
+			this.tStamp = tStamp;
+			this.value= value;
+		}
+	}
+	
+	
+	public ErmaReader(String fileName,Locale locale){
 		int dataLength =0;
+		this.locale = locale;
 		try {
 			/*Read the file into memory (make sure you've got sufficient memory available...)*/
 			DataInputStream di = new DataInputStream( new FileInputStream(fileName));
@@ -29,7 +49,8 @@ public class ErmaReader{
 		accelerations = decodeData(data);
 	}
 	
-	public ErmaReader(byte[] data){
+	public ErmaReader(byte[] data,Locale locale){
+		this.locale = locale;
 		accelerations = decodeData(data);
 		System.out.println("Decoded data "+accelerations[0].length);
 	}
@@ -59,38 +80,57 @@ public class ErmaReader{
 		LogRecord logrecord;
 		int pointerIncrementTargetForGC = dataLength/25;
 		int pointerIncrement = 0;
+		long currentTStamp = -1;
+		int prevMidnight = Integer.MAX_VALUE;
+		int nextMidnight = -1;
 		
 		while (pointer < dataLength){
 			//Check that parsing is successful, should have 1E to indicate start of package
 			logrecord = new LogRecord(data,pointer);
 			//System.out.println("P "+pointer);
 			/*Extract accelerations here*/
-			/*JATKA TASTA, Modify implementation to use data instead of logrecord copy??*/
 			if (logrecord.type == 0x00){
-				int valuesInRecord = (int) logrecord.payload.length*8/12;
-				int valuesExtracted = 0;
-				int direction = 0;	//Used to keep track of which dimension to extract
-				//Loop through the payload to extract the accelerometry values
-				short valueBits;
-				int payloadPointer = 0;
-				while (valuesExtracted <valuesInRecord){
-					//The values are 12 bit back-to-back -> 2 values take 3 bytes
-					if (valuesExtracted % 2 == 0){
-						valueBits =(short) (((logrecord.payload[payloadPointer]& 0xff)<<4)| ((logrecord.payload[payloadPointer+1] & 0xf0)>>4));
-					} else {
-						valueBits =(short) (((logrecord.payload[payloadPointer]& 0x0f)<<8)| (logrecord.payload[payloadPointer+1] & 0xff));
+				if (nextMidnight < 0){
+					long tempMidnight = Utils.getNextMidnight(1000l*((long) logrecord.timeStamp), locale);
+					prevMidnight = (int) (tempMidnight/1000l);	//Convert back to actigraph tStamps
+					//System.out.println("Midnight +1");
+					nextMidnight = (int) (Utils.getNextMidnight(tempMidnight,locale)/1000l);
+				}
+				
+				//Have a full day of data in memory, calculate one second MADs, and 
+				if (logrecord.timeStamp >= nextMidnight){
+					
+				}
+				
+				
+				//Worry about this data if it is between midnights
+				if (logrecord.timeStamp >= prevMidnight && logrecord.timeStamp < nextMidnight){
+			
+					int valuesInRecord = (int) logrecord.payload.length*8/12;
+					int valuesExtracted = 0;
+					int direction = 0;	//Used to keep track of which dimension to extract
+					//Loop through the payload to extract the accelerometry values
+					short valueBits;
+					int payloadPointer = 0;
+					while (valuesExtracted <valuesInRecord){
+						//The values are 12 bit back-to-back -> 2 values take 3 bytes
+						if (valuesExtracted % 2 == 0){
+							valueBits =(short) (((logrecord.payload[payloadPointer]& 0xff)<<4)| ((logrecord.payload[payloadPointer+1] & 0xf0)>>4));
+						} else {
+							valueBits =(short) (((logrecord.payload[payloadPointer]& 0x0f)<<8)| (logrecord.payload[payloadPointer+1] & 0xff));
+							++payloadPointer;
+						}
+						++valuesExtracted;
 						++payloadPointer;
-					}
-					++valuesExtracted;
-					++payloadPointer;
-					if (valueBits > 2047){
-						valueBits |=0xf000;	//Set the sign
-					}
-					//Assign the value to the correct dimension
-					tempAccelerations.get(direction).add(valueBits);
-					++direction;
-					if (direction>2){
-						direction = 0;
+						if (valueBits > 2047){
+							valueBits |=0xf000;	//Set the sign
+						}
+						//Assign the value to the correct dimension
+						tempAccelerations.get(direction).add(valueBits);
+						++direction;
+						if (direction>2){
+							direction = 0;
+						}
 					}
 				}
 				/*
@@ -161,8 +201,5 @@ public class ErmaReader{
 			nextRecordPointer = pointer+8+size+1;
 		}
 	}
-	
-	public static void main(String[] a){
-		ErmaReader lbr = new ErmaReader(a[0]);
-	}
+
 }
