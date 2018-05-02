@@ -20,8 +20,6 @@ import timo.jyu.utils.Value;	//Helper class to store mad and peak values
 
 public class ErmaReader{
 	private byte[] data;
-	
-	public double[][] accelerations;	//This will be returned to matlab
 	public ArrayList<Value> mads;	//Holds one second Mad values, and corresponding timestamps
 	public ArrayList<Value> peaks; //Holds peaks and corresponding timestamps (uses the start of the peak as the instant)
 	private Locale locale;
@@ -41,24 +39,21 @@ public class ErmaReader{
 			di.readFully(data);	/*Read the file into memory*/
 			di.close();	//Close the file
 		} catch (Exception err){System.err.println("Error: "+err.getMessage());}
-		accelerations = decodeData(data,header.getAccelerationScale());
+		decodeData(data,header.getAccelerationScale());
 	}
 	
 	public ErmaReader(byte[] data,ActigraphInfo header,Locale locale){
 		this.locale = locale;
-		accelerations = decodeData(data,header.getAccelerationScale());
+		decodeData(data,header.getAccelerationScale());
 		//System.out.println("Decoded data "+accelerations[0].length);
 	}
 	
 	
-	public double[][] decodeData(byte[] data,double aScale){
-	
-		double[][] returnData = null;
+	public void decodeData(byte[] data,double aScale){
 		int dataLength = data.length;
 		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
 		//System.out.println("Max array length "+maxArrayLength);
 		ArrayList<ArrayList<Short>> tempAccelerations  = new ArrayList<ArrayList<Short>>();	//Y, X, Z
-		ArrayList<Integer> tStamps = new ArrayList<Integer>();
 		
 		ArrayList<Value> resultant = new ArrayList<Value>();	//Used to hold resultant
 	   mads = new ArrayList<Value>();
@@ -110,31 +105,13 @@ public class ErmaReader{
 					//System.out.println("Mads size "+mads.size());
 					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
 					//peaks.add(Utils.getPeaks(resultant));
-					
-					//DEBUGGING
-					if (returnData == null & cnt > 1){
-					
-						returnData = new double[4][tempAccelerations.get(0).size()];
-						//Add time stamps
-						for (int a = 0;a<tStamps.size();++a){
-							returnData[0][a] = tStamps.get(a);
-						}
-						
-						
-						for (int d = 0;d<tempAccelerations.size(); ++d){
-							for (int a = 0;a<tempAccelerations.get(d).size();++a){
-								returnData[d+1][a] = tempAccelerations.get(d).get(a)/aScale;
-							}
-						}
-						
-					}
-					
+										
 					//Reset raw data
 					resultant.clear();
 					for (int d = 0;d<tempAccelerations.size(); ++d){
 						tempAccelerations.get(d).clear();
 					}
-					tStamps.clear();
+
 					//Update midnight time stamps
 					prevMidnight = nextMidnight;
 					nextMidnight = (int) (Utils.getNextMidnight(1000l*((long) nextMidnight),locale)/1000l);
@@ -175,58 +152,18 @@ public class ErmaReader{
 	Math.pow(((double) tempAccelerations.get(1).get(tempAccelerations.get(direction).size()-1))/aScale,2d)+
 	Math.pow(((double) tempAccelerations.get(2).get(tempAccelerations.get(direction).size()-1))/aScale,2d))
 							));
-							
-							//Add time stamp
-							tStamps.add(logrecord.timeStamp);
-							
+
 						}
 						
 
 					}
 				}
-				/*
-				for (int j = 0;j<tempAccelerations.size();++j){
-						System.out.print(tempAccelerations.get(j).size()+"\t");
-				}
-				System.out.println("\t");
-				System.out.println("ind\ty\tx\tz\t");
-				for (int i = 0;i<tempAccelerations.get(0).size();++i){
-					System.out.print(i+"\t");
-					for (int j = 0;j<tempAccelerations.size();++j){
-						System.out.print(tempAccelerations.get(j).get(i)+"\t");
-					}
-					System.out.println("");
-				}
-				//System.out.println("Found activity data, pointer "+pointer+" values "+valuesInRecord);
-				break;
-				*/
 			}
 			pointerIncrement += logrecord.nextRecordPointer-pointer;
 			pointer = logrecord.nextRecordPointer;
 			System.out.print("Processed \t"+((int) (((double)pointer)/((double)dataLength)*100d))+"\r");
-			/*
-			if (pointerIncrement > pointerIncrementTargetForGC){
-				System.out.println("garbage collect");
-				System.gc();
-				System.out.println("garbage collect done");
-				pointerIncrement = 0;
-			}
-			*/
 		}
-		//Get the results into a primitive short array
-		/*
-		int arrayLength = min(new int[]{tempAccelerations.get(0).size(),tempAccelerations.get(1).size(),tempAccelerations.get(2).size()});
-		short[][] returnVal = new short[3][];
-		for (int j = 0;j<tempAccelerations.size();++j){
-			returnVal[j] = new short[arrayLength];
-			for (int i = 0;i<arrayLength;++i){
-				returnVal[j][i] = tempAccelerations.get(j).get(i);
-			}
-			tempAccelerations.get(j).clear();
-		}
-		*/
-		//return returnVal;
-		return returnData;
+		return;
 	}
 	
 	private int min(int[] a){
