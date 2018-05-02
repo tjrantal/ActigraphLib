@@ -27,7 +27,7 @@ public class ReadGT3x {
 	public ArrayList<Double> resultant;
 	public ArrayList<Double> tStamps;
 
-	public ReadGT3x(String fileIn){
+	public ReadGT3x(String fileIn, String targetPath){
 		
 		header = getHeader(fileIn);
 		if (header == null){
@@ -44,15 +44,15 @@ public class ReadGT3x {
 		ErmaReader lbr = new ErmaReader(data,header, new Locale("fi","FI"));
 		log("Got lbr");
 		//Spit mads out to a file
-		writeMads(lbr);
+		writeMads(lbr,targetPath);
 		
 		
 	}
 
-	private void writeMads(ErmaReader er){
+	private void writeMads(ErmaReader er,String targetPath){
 		//Spit out MADs to a temporary file
 		try{		
-			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testOutput.csv")));
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File(targetPath+"_MAD.csv")));
 			br.write(String.format(Locale.ROOT,"%s,%s\n","TimeStamp","MAD"));
 			for (int i = 0;i<er.mads.size();++i){
 				br.write(String.format(Locale.ROOT,"%d,%f\n",1000l*((long) er.mads.get(i).tStamp),er.mads.get(i).value));
@@ -65,7 +65,7 @@ public class ReadGT3x {
 		
 		//Spit out peaks to a temporary file
 		try{		
-			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testPeaksOutput.csv")));
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File(targetPath+"_PEAK.csv")));
 			br.write(String.format(Locale.ROOT,"%s,%s\n","TimeStamp","MaximumValue"));
 			for (int i = 0;i<er.peaks.size();++i){
 				br.write(String.format(Locale.ROOT,"%d,%f\n",1000l*((long) er.peaks.get(i).tStamp),er.peaks.get(i).value));
@@ -82,7 +82,7 @@ public class ReadGT3x {
 	}
 
 	public static void main(String[] a){
-		ReadGT3x gt = new ReadGT3x(a[0]);
+		ReadGT3x gt = new ReadGT3x(a[0],a[1]);
 	}
 
 	private ActigraphInfo getHeader(String fileIn){
@@ -203,9 +203,5 @@ public class ReadGT3x {
 		return data;
 	}
 
-	public void decodeData(byte[] data){
-		
-		
-	}
 
 }

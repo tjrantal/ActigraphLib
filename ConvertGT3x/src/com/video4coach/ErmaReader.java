@@ -99,13 +99,14 @@ public class ErmaReader{
 				//Have a full day of data in memory, calculate one second MADs, and 
 				if (logrecord.timeStamp >= nextMidnight){
 					++cnt;
-					System.out.println("\nFound full day of data resultant size "+resultant.size());
-					//Calculate MADs
-					mads.addAll(Utils.getMads(resultant));
-					//System.out.println("Mads size "+mads.size());
-					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
-					peaks.addAll(Utils.getPeaks(resultant));
-										
+					//System.out.println("\nFound full day of data resultant size "+resultant.size());
+					if (resultant.size() > 0){
+						//Calculate MADs
+						mads.addAll(Utils.getMads(resultant));
+						//System.out.println("Mads size "+mads.size());
+						//Detect peaks NEEDS TO BE IMPLEMENTED!!!
+						peaks.addAll(Utils.getPeaks(resultant));
+					}
 					//Reset raw data
 					resultant.clear();
 					for (int d = 0;d<tempAccelerations.size(); ++d){
@@ -163,6 +164,7 @@ public class ErmaReader{
 			pointer = logrecord.nextRecordPointer;
 			System.out.print("Processed \t"+((int) (((double)pointer)/((double)dataLength)*100d))+"\r");
 		}
+		System.out.println("");
 		return;
 	}
 	
