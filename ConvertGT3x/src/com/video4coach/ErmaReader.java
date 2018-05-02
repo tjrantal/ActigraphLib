@@ -104,7 +104,7 @@ public class ErmaReader{
 					mads.addAll(Utils.getMads(resultant));
 					//System.out.println("Mads size "+mads.size());
 					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
-					//peaks.add(Utils.getPeaks(resultant));
+					peaks.addAll(Utils.getPeaks(resultant));
 										
 					//Reset raw data
 					resultant.clear();

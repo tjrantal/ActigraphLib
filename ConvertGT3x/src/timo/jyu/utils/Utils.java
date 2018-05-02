@@ -34,6 +34,36 @@ public class Utils{
 		
 	}
 	
+	/**Go through the data. Get any peak over 1.3 g, 
+		Add the time stamp and peak value to the return array.*/
+	public static ArrayList<Value> getPeaks(ArrayList<Value> resultant){
+		ArrayList<Value> peaks = new ArrayList<Value>();
+		ArrayList<Double> temp = new ArrayList<Double>();
+		long tStamp = resultant.get(0).tStamp;
+		int cnt = 0;
+		while (cnt < resultant.size()){
+			//If peak initiation
+			if (resultant.get(cnt).value >= 1.3){
+				//We've found a peak
+				double maxVal = Double.NEGATIVE_INFINITY;
+				long peakStamp = 0;
+				while (cnt < resultant.size() && resultant.get(cnt).value >= 1.3){
+					if (resultant.get(cnt).value > maxVal){
+						maxVal = resultant.get(cnt).value;
+						peakStamp = resultant.get(cnt).tStamp;
+					}
+					++cnt;
+				}
+				//Gone past the peak
+				peaks.add(new Value(peakStamp,maxVal));
+
+			}else{
+				++cnt;
+			}
+		}
+		return peaks;
+	}
+	
 	public static ArrayList<Value> getMads(ArrayList<Value> resultant){
 		ArrayList<Value> mads = new ArrayList<Value>();
 		ArrayList<Double> temp = new ArrayList<Double>();
@@ -61,5 +91,6 @@ public class Utils{
 		//System.out.println("Return mads");
 		return mads;
 	}
+	
 
 }

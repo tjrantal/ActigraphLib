@@ -50,6 +50,7 @@ public class ReadGT3x {
 	}
 
 	private void writeMads(ErmaReader er){
+		//Spit out MADs to a temporary file
 		try{		
 			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testOutput.csv")));
 			br.write(String.format(Locale.ROOT,"%s,%s\n","TimeStamp","MAD"));
@@ -62,6 +63,18 @@ public class ReadGT3x {
 			e.printStackTrace();
 		}
 		
+		//Spit out peaks to a temporary file
+		try{		
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testPeaksOutput.csv")));
+			br.write(String.format(Locale.ROOT,"%s,%s\n","TimeStamp","MaximumValue"));
+			for (int i = 0;i<er.peaks.size();++i){
+				br.write(String.format(Locale.ROOT,"%d,%f\n",1000l*((long) er.peaks.get(i).tStamp),er.peaks.get(i).value));
+			}
+			br.flush();
+			br.close();
+		}catch  (Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	private static void log(String text) {
