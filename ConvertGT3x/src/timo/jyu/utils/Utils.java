@@ -45,7 +45,7 @@ public class Utils{
 				//calc mad here, add to mads, increment tStamp, and clear temp
 				//System.out.println("Next second temp size "+temp.size());
 				mads.add(new Value(tStamp,Maths.calcMad(temp)));
-				++tStamp;
+				tStamp = resultant.get(cnt).tStamp;
 				temp.clear();
 
 			}

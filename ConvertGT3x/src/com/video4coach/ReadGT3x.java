@@ -61,6 +61,24 @@ public class ReadGT3x {
 		}catch  (Exception e){
 			e.printStackTrace();
 		}
+		
+		//Write raw data into a file as well
+		try{		
+			BufferedWriter br = new BufferedWriter(new FileWriter(new File("./testRawOutput.csv")));
+			br.write(String.format(Locale.ROOT,"%s,%s,%s,%s\n","TimeStamp","X","Y","Z"));
+			for (int r = 0;r<er.accelerations[0].length;++r){
+				br.write(String.format(Locale.ROOT,"%d",1000l*((long) er.accelerations[0][r])));
+				for (int c = 1;c<er.accelerations.length;++c){
+					br.write(String.format(Locale.ROOT,",%f",er.accelerations[c][r]));
+				}
+				br.write("\n");
+			}
+			br.flush();
+			br.close();
+		}catch  (Exception e){
+			e.printStackTrace();
+		}
+		
 	}
 
 	private static void log(String text) {

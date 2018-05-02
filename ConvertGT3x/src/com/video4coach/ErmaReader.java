@@ -21,7 +21,7 @@ import timo.jyu.utils.Value;	//Helper class to store mad and peak values
 public class ErmaReader{
 	private byte[] data;
 	
-	public short[][] accelerations;	//This will be returned to matlab
+	public double[][] accelerations;	//This will be returned to matlab
 	public ArrayList<Value> mads;	//Holds one second Mad values, and corresponding timestamps
 	public ArrayList<Value> peaks; //Holds peaks and corresponding timestamps (uses the start of the peak as the instant)
 	private Locale locale;
@@ -51,11 +51,14 @@ public class ErmaReader{
 	}
 	
 	
-	public short[][] decodeData(byte[] data,double aScale){
+	public double[][] decodeData(byte[] data,double aScale){
+	
+		double[][] returnData = null;
 		int dataLength = data.length;
 		int maxArrayLength = (int) (((double) dataLength)*8d/(12d*3d));
 		//System.out.println("Max array length "+maxArrayLength);
 		ArrayList<ArrayList<Short>> tempAccelerations  = new ArrayList<ArrayList<Short>>();	//Y, X, Z
+		ArrayList<Integer> tStamps = new ArrayList<Integer>();
 		
 		ArrayList<Value> resultant = new ArrayList<Value>();	//Used to hold resultant
 	   mads = new ArrayList<Value>();
@@ -84,7 +87,7 @@ public class ErmaReader{
 		long currentTStamp = -1;
 		int prevMidnight = Integer.MAX_VALUE;
 		int nextMidnight = -1;
-		
+		int cnt = 0;
 		while (pointer < dataLength){
 			//Check that parsing is successful, should have 1E to indicate start of package
 			logrecord = new LogRecord(data,pointer);
@@ -100,19 +103,38 @@ public class ErmaReader{
 				
 				//Have a full day of data in memory, calculate one second MADs, and 
 				if (logrecord.timeStamp >= nextMidnight){
-					//System.out.println("\nFound full day of data resultant size "+resultant.size());
+					++cnt;
+					System.out.println("\nFound full day of data resultant size "+resultant.size());
 					//Calculate MADs
 					mads.addAll(Utils.getMads(resultant));
 					//System.out.println("Mads size "+mads.size());
 					//Detect peaks NEEDS TO BE IMPLEMENTED!!!
 					//peaks.add(Utils.getPeaks(resultant));
 					
+					//DEBUGGING
+					if (returnData == null & cnt > 1){
+					
+						returnData = new double[4][tempAccelerations.get(0).size()];
+						//Add time stamps
+						for (int a = 0;a<tStamps.size();++a){
+							returnData[0][a] = tStamps.get(a);
+						}
+						
+						
+						for (int d = 0;d<tempAccelerations.size(); ++d){
+							for (int a = 0;a<tempAccelerations.get(d).size();++a){
+								returnData[d+1][a] = tempAccelerations.get(d).get(a)/aScale;
+							}
+						}
+						
+					}
+					
 					//Reset raw data
 					resultant.clear();
 					for (int d = 0;d<tempAccelerations.size(); ++d){
 						tempAccelerations.get(d).clear();
 					}
-					
+					tStamps.clear();
 					//Update midnight time stamps
 					prevMidnight = nextMidnight;
 					nextMidnight = (int) (Utils.getNextMidnight(1000l*((long) nextMidnight),locale)/1000l);
@@ -153,6 +175,10 @@ public class ErmaReader{
 	Math.pow(((double) tempAccelerations.get(1).get(tempAccelerations.get(direction).size()-1))/aScale,2d)+
 	Math.pow(((double) tempAccelerations.get(2).get(tempAccelerations.get(direction).size()-1))/aScale,2d))
 							));
+							
+							//Add time stamp
+							tStamps.add(logrecord.timeStamp);
+							
 						}
 						
 
@@ -188,6 +214,7 @@ public class ErmaReader{
 			*/
 		}
 		//Get the results into a primitive short array
+		/*
 		int arrayLength = min(new int[]{tempAccelerations.get(0).size(),tempAccelerations.get(1).size(),tempAccelerations.get(2).size()});
 		short[][] returnVal = new short[3][];
 		for (int j = 0;j<tempAccelerations.size();++j){
@@ -197,7 +224,9 @@ public class ErmaReader{
 			}
 			tempAccelerations.get(j).clear();
 		}
-		return returnVal;
+		*/
+		//return returnVal;
+		return returnData;
 	}
 	
 	private int min(int[] a){
